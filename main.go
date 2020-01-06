@@ -8,6 +8,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type user struct {
+	ID       int    `json-:"id"`
+	Email    string `json-:"email"`
+	Password string `json-:"password"`
+}
+
+type jwt struct {
+	Token string `json-:"token"`
+}
+
+type error struct {
+	Message string `json-:"message"`
+}
+
 func main() {
 	// Declaring the router returning a new router instance
 	r := mux.NewRouter()
