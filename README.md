@@ -30,15 +30,15 @@ This is a simple Golang server with JWT auth.
 
     - Structure of a JWT: {Base64 encoded Header}.{Base64 encoded Payload}.{Signature}
 
-      - **header**: Algorithm & Token Type
+      - header: Algorithm & Token Type
 
-      - **payload**: Carry claims 
+      - payload: Carry claims 
 
         - Contains data such as User information token expiry etc..
 
         - Three types of claims: Registered, Public, and Private
       
-      - **signature**: Computed from the Header, Payload and a Secret
+      - signature: Computed from the Header, Payload and a Secret
 
         - An algorithm to generate the signature
 
