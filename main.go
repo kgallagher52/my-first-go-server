@@ -25,10 +25,13 @@ func main() {
 
 func signup(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Signup invoked.")
+	w.Write([]byte("Successfully called signup")) // Sending a response
 }
 
 func signin(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Signin invoked.")
+	w.Write([]byte("Successfully called signin")) // Sending a response
+
 }
 
 func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +39,6 @@ func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func tokenVerifyMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	fmt.Println("tokenVerifyMiddleware Invoked.")
+	fmt.Println("token Verify Middleware Invoked.")
 	return nil
 }
