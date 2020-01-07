@@ -11,6 +11,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type user struct {
@@ -75,6 +76,10 @@ func respondWithError(w http.ResponseWriter, status int, error Error) {
 	json.NewEncoder(w).Encode(error)
 }
 
+func responseJSON(w http.ResponseWriter, data interface{}) {
+	json.NewEncoder(w).Encode(data)
+}
+
 func signup(w http.ResponseWriter, r *http.Request) {
 	var user user
 	var error Error
@@ -93,8 +98,30 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, error)
 		return
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Server is expecting a string not a slice of bytes which the hash makes
+	user.Password = string(hash)
 	spew.Dump(user)
-	w.Write([]byte("Successfully called signup")) // Sending a response
+	// Creating query string
+	stmt := "insert into users (email, password) values($1,$2) RETURNING id;"
+
+	// Insert records into the Database .Scan(&user.ID) - because we are expecting a return of the id
+	err = db.QueryRow(stmt, user.Email, user.Password).Scan(&user.ID)
+	// Scan suppose to return an error
+
+	if err != nil {
+		error.Message = "Server Error"
+		respondWithError(w, http.StatusInternalServerError, error)
+		return
+	}
+	// set as an empty string because we are returning the user object to the user
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+	responseJSON(w, user)
 }
 
 func signin(w http.ResponseWriter, r *http.Request) {
