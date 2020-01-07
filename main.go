@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -20,7 +21,8 @@ type user struct {
 	Password string `json-:"password"`
 }
 
-type jwt struct {
+// JWT ...
+type JWT struct {
 	Token string `json-:"token"`
 }
 
@@ -84,15 +86,13 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	var user user
 	var error Error
 	// Decoder that reads body maps it to user struct
-	json.NewDecoder(r.Body).Decode(&user)
+	json.NewDecoder(r.Body).Decode(&user) // Reciving
 
 	if user.Email == "" { // Validation
 		error.Message = "Email is missing."
 		respondWithError(w, http.StatusBadRequest, error)
 		return
-
 	}
-
 	if user.Password == "" { // Validation
 		error.Message = "Password is missing."
 		respondWithError(w, http.StatusBadRequest, error)
@@ -103,9 +103,10 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Server is expecting a string not a slice of bytes which the hash makes
 	user.Password = string(hash)
-	spew.Dump(user)
+	spew.Dump(user) // Printing out the user object
 	// Creating query string
 	stmt := "insert into users (email, password) values($1,$2) RETURNING id;"
 
@@ -120,13 +121,44 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	}
 	// set as an empty string because we are returning the user object to the user
 	user.Password = ""
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json") // Setting a header for the response
 	responseJSON(w, user)
 }
 
+// GenerateToken ...
+func GenerateToken(user user) (string, error) {
+	var err error
+	secret := "secret"
+
+	/*
+		jwt - header.payload.secret
+		(algorithm, struct containing claims)
+		iss - is a type of claim
+	*/
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": user.Email,
+		"iss":   "course",
+	})
+	tokenString, err := token.SignedString([]byte(secret))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return tokenString, nil
+}
+
 func signin(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Signin invoked.")
-	w.Write([]byte("Successfully called signin")) // Sending a response
+	var user user
+
+	json.NewDecoder(r.Body).Decode(&user)
+	token, err := GenerateToken(user)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(token)
 }
 
 func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
