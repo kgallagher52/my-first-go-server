@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 )
@@ -21,7 +23,8 @@ type jwt struct {
 	Token string `json-:"token"`
 }
 
-type error struct {
+// Error ...
+type Error struct {
 	Message string `json-:"message"`
 }
 
@@ -65,8 +68,32 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
 
+func respondWithError(w http.ResponseWriter, status int, error Error) {
+	// Respond with an error
+	// Send status bad request
+	w.WriteHeader(status) // 400
+	json.NewEncoder(w).Encode(error)
+}
+
 func signup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Signup invoked.")
+	var user user
+	var error Error
+	// Decoder that reads body maps it to user struct
+	json.NewDecoder(r.Body).Decode(&user)
+
+	if user.Email == "" { // Validation
+		error.Message = "Email is missing."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+
+	}
+
+	if user.Password == "" { // Validation
+		error.Message = "Password is missing."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+	spew.Dump(user)
 	w.Write([]byte("Successfully called signup")) // Sending a response
 }
 

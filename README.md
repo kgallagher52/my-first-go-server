@@ -24,6 +24,8 @@ This is a simple Golang server with JWT auth.
 
   [online-postgresql](https://www.elephantsql.com/)
 
+  [Go-Spew](https://github.com/davecgh/go-spew) - install: "go get -u github.com/davecgh/go-spew/spew" Styles JSON returned
+
 ### What are JWTs?
 
     - JWT stands for JSON Web Token
