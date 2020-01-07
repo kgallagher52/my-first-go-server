@@ -4,21 +4,25 @@ This is a simple Golang server with JWT auth.
 
 ## Resources
 
-[lectures](https://www.udemy.com/course/build-jwt-authenticated-restful-apis-with-golang/learn/lecture/)
+  [lectures](https://www.udemy.com/course/build-jwt-authenticated-restful-apis-with-golang/learn/lecture/)
 
-[HTTP-ROUTER](https://github.com/gorilla/mux) - install: "go get -u github.com/gorilla/mux"
+  [HTTP-ROUTER](https://github.com/gorilla/mux) - install: "go get -u github.com/gorilla/mux"
 
-[JWT](https://github.com/dgrijalva/jwt-go) - install: "go get github.com/dgrijalva/jwt-go"
+  [JWT](https://github.com/dgrijalva/jwt-go) - install: "go get github.com/dgrijalva/jwt-go"
 
-[pq](https://github.com/lib/pq) - install: "go get github.com/lib/pq"
+  [pq](https://github.com/lib/pq) - install: "go get github.com/lib/pq"
 
-[postman](https://www.getpostman.com/) - for testing endpoints
+  [postman](https://www.getpostman.com/) - for testing endpoints
 
-[golang-install](https://golang.org/doc/install)
+  [golang-install](https://golang.org/doc/install)
 
-[JWT-Offical-site](https://jwt.io)
+  [JWT-Offical-site](https://jwt.io)
 
-[JWT-Info](https://tools.ietf.org/html/rfc7519)
+  [JWT-Info](https://tools.ietf.org/html/rfc7519)
+
+  [postgresql](https://www.postgresql.org/)
+
+  [online-postgresql](https://www.elephantsql.com/)
 
 ### What are JWTs?
 
@@ -43,3 +47,22 @@ This is a simple Golang server with JWT auth.
         - An algorithm to generate the signature
 
         - Digitally signed using a secret string only known to the developer
+
+
+### postgresql queries
+
+  1. Creating user table
+  
+      create table users (
+        id serial primary key,
+        email text not null unique,
+        password text not null
+      );
+
+  2. Creating a user record
+
+      insert into users (email, password) values (‘someemail.com’, ‘somePassword’)
+  
+  3. Selecting users
+
+      select * from users;
