@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/dgrijalva/jwt-go"
@@ -214,7 +215,45 @@ func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Protected Endpoint invoked.")
 }
 
+// * Validates the token that we sent and gives us access to the protected endpoint
+// next is the function that will be called after the token has been verified
 func tokenVerifyMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	fmt.Println("token Verify Middleware Invoked.")
-	return nil
+	// Pass in a callback function
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var errorObject Error                       // Created so any error we encounter we can send to the client
+		authHeader := r.Header.Get("Authorization") // Map of key value pairs
+		// Extract the body out of the bearer token
+		bearerToken := strings.Split(authHeader, " ")
+
+		if len(bearerToken) == 2 {
+			authToken := bearerToken[1]
+			// Parses and validates and returns a token
+			token, error := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+				// Validate the token
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("There was an error")
+				}
+				return []byte("secret"), nil // Authorized token
+			})
+			if error != nil {
+				errorObject.Message = error.Error()
+				respondWithError(w, http.StatusUnauthorized, errorObject)
+				return
+			}
+			// Token is valid
+			if token.Valid {
+				next.ServeHTTP(w, r)
+			} else {
+				errorObject.Message = error.Error()
+				respondWithError(w, http.StatusUnauthorized, errorObject)
+				return
+			}
+
+		} else {
+			errorObject.Message = "Invalid Token."
+			respondWithError(w, http.StatusUnauthorized, errorObject)
+			return
+		}
+
+	})
 }
