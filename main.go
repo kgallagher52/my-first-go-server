@@ -15,19 +15,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type user struct {
+type user struct { // Model
 	ID       int    `json-:"id"`
 	Email    string `json-:"email"`
 	Password string `json-:"password"`
 }
 
 // JWT ...
-type JWT struct {
+type JWT struct { // Model
 	Token string `json-:"token"`
 }
 
 // Error ...
-type Error struct {
+type Error struct { // Model
 	Message string `json-:"message"`
 }
 
@@ -140,25 +140,74 @@ func GenerateToken(user user) (string, error) {
 		"email": user.Email,
 		"iss":   "course",
 	})
+
+	// Getting the signed token
 	tokenString, err := token.SignedString([]byte(secret))
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return tokenString, nil
 }
 
 func signin(w http.ResponseWriter, r *http.Request) {
-	var user user
+	var user user   // Holding user information
+	var jwt JWT     // token information
+	var error Error // Error information
 
 	json.NewDecoder(r.Body).Decode(&user)
+
+	if user.Email == "" {
+		error.Message = "Email is empty."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+	if user.Password == "" {
+		error.Message = "Password is empty."
+		respondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	// Store password so that we can later compare with what is saved in out table
+	password := user.Password
+	// Checking if the user exists in our table * QueryRow returns at least one row
+	row := db.QueryRow("select * from users where email=$1", user.Email)
+
+	err := row.Scan(&user.ID, &user.Email, &user.Password)
+
+	// Considiration if the scan get's no rows
+	if err != nil {
+		if err == sql.ErrNoRows {
+			error.Message = "The user does not exist."
+			respondWithError(w, http.StatusBadRequest, error)
+			return
+		} else {
+			log.Fatal(err)
+		}
+	}
+	hashedPassword := user.Password
+	// Comparing password with pasword saved when logged in turn password into bytes to compare
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+
+	if err != nil {
+		error.Message = "Invalid Password"
+		respondWithError(w, http.StatusUnauthorized, error)
+		return
+	}
+	// If there is no error we generate the token
 	token, err := GenerateToken(user)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(token)
+	w.WriteHeader(http.StatusOK) // Add ok status to the header
+	jwt.Token = token            // Assign generated token to the token variable we created
+
+	// Send the jwt token to the user using the function we created earlier
+	responseJSON(w, jwt)
+
 }
 
 func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
