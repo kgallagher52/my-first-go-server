@@ -183,9 +183,8 @@ func signin(w http.ResponseWriter, r *http.Request) {
 			error.Message = "The user does not exist."
 			respondWithError(w, http.StatusBadRequest, error)
 			return
-		} else {
-			log.Fatal(err)
 		}
+		log.Fatal(err)
 	}
 	hashedPassword := user.Password
 	// Comparing password with pasword saved when logged in turn password into bytes to compare
